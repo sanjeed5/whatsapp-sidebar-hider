@@ -3,13 +3,18 @@ body.hide-sidebar div._aigw[class*="x9f619"][class*="x1n2onr6"] {
   display: none !important;
 }
 
-/* Toggle button styles */
+/* Toggle button styles with fallbacks */
 .sidebar-toggle-btn {
   background: none;
   border: none;
   padding: 8px;
   cursor: pointer;
-  color: var(--icon-color);
+  color: var(--icon-color, #54656f);
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: var(--background-default-hover, rgba(0, 0, 0, 0.05));
 }
 
 .sidebar-toggle-btn svg {
@@ -19,6 +24,21 @@ body.hide-sidebar div._aigw[class*="x9f619"][class*="x1n2onr6"] {
 
 /* Active state when sidebar is hidden */
 .sidebar-toggle-btn.active {
-  background-color: var(--background-default-active);
+  background-color: var(--background-default-active, rgba(0, 0, 0, 0.1));
   border-radius: 8px;
+}
+
+/* Fallback styles for dark mode if WhatsApp variables are not available */
+@media (prefers-color-scheme: dark) {
+  .sidebar-toggle-btn {
+    color: var(--icon-color, #aebac1);
+  }
+  
+  .sidebar-toggle-btn:hover {
+    background-color: var(--background-default-hover, rgba(255, 255, 255, 0.05));
+  }
+  
+  .sidebar-toggle-btn.active {
+    background-color: var(--background-default-active, rgba(255, 255, 255, 0.1));
+  }
 } 
