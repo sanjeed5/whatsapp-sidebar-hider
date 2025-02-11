@@ -1,0 +1,7 @@
+Privacy Policy
+Our Chrome extension respects your privacy. Here's what you need to know:
+
+No Data Collection: We do not collect, store, or share any personal data.
+Local Functionality: The extension only modifies the webpage (DOM) locally on your device. No data is sent to external servers.
+No Tracking: We do not track your browsing activity or store any usage data.
+Your privacy is completely protected while using our extension.
