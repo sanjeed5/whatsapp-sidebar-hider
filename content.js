@@ -75,10 +75,29 @@ function setupMutationObserver() {
   return observer;
 }
 
+// Cleanup function to remove button and event listeners
+function cleanup() {
+  const button = document.querySelector('.sidebar-toggle-btn');
+  if (button) {
+    button.removeEventListener('click', toggleSidebar);
+    const wrapper = button.closest('._ajv7');
+    if (wrapper) {
+      wrapper.remove();
+    }
+  }
+  
+  // Remove sidebar hidden state if it was active
+  document.body.classList.remove('hide-sidebar');
+}
+
+// Handle extension unload
+chrome.runtime.onSuspend?.addListener(cleanup);
+
 // Initialize the extension
 function init() {
   let retryCount = 0;
   const MAX_RETRIES = 30; // 30 seconds max
+  let observer = null;
   
   const checkInterval = setInterval(() => {
     retryCount++;
@@ -96,7 +115,7 @@ function init() {
       button.addEventListener('click', () => toggleSidebar(button));
 
       // Setup mutation observer
-      const observer = setupMutationObserver();
+      observer = setupMutationObserver();
 
       // Restore previous state
       chrome.storage.local.get('sidebarHidden', (data) => {
@@ -114,7 +133,19 @@ function init() {
       console.warn('WhatsApp Sidebar Hider: Failed to find toolbar after 30 seconds');
     }
   }, 1000);
+
+  // Return cleanup function
+  return () => {
+    clearInterval(checkInterval);
+    if (observer) {
+      observer.disconnect();
+    }
+    cleanup();
+  };
 }
 
 // Start the extension
-init(); 
+const cleanupFunction = init();
+
+// Handle page unload
+window.addEventListener('unload', cleanupFunction); 
