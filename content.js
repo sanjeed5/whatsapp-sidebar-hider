@@ -55,6 +55,26 @@ function toggleSidebar(button) {
   });
 }
 
+// Handle dynamic changes to the DOM
+function setupMutationObserver() {
+  const observer = new MutationObserver((mutations) => {
+    const toolbar = document.querySelector('[data-js-navbar="true"]');
+    const button = document.querySelector('.sidebar-toggle-btn');
+    
+    if (toolbar && !button) {
+      console.log('WhatsApp Sidebar Hider: Toolbar found but button missing, recreating button');
+      createToggleButton();
+    }
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  return observer;
+}
+
 // Initialize the extension
 function init() {
   let retryCount = 0;
@@ -74,6 +94,9 @@ function init() {
 
       // Add click handler
       button.addEventListener('click', () => toggleSidebar(button));
+
+      // Setup mutation observer
+      const observer = setupMutationObserver();
 
       // Restore previous state
       chrome.storage.local.get('sidebarHidden', (data) => {
