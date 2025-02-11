@@ -1,0 +1,24 @@
+/* Hide sidebar when the body has the class */
+body.hide-sidebar div._aigw[class*="x9f619"][class*="x1n2onr6"] {
+  display: none !important;
+}
+
+/* Toggle button styles */
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--icon-color);
+}
+
+.sidebar-toggle-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Active state when sidebar is hidden */
+.sidebar-toggle-btn.active {
+  background-color: var(--background-default-active);
+  border-radius: 8px;
+} 
