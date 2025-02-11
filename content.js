@@ -44,8 +44,15 @@ function toggleSidebar(button) {
   const isHidden = body.classList.toggle('hide-sidebar');
   button.classList.toggle('active', isHidden);
   
-  // Save preference
-  chrome.storage.local.set({ sidebarHidden: isHidden });
+  // Save preference with error handling
+  chrome.storage.local.set({ sidebarHidden: isHidden }, () => {
+    if (chrome.runtime.lastError) {
+      console.warn('Failed to save sidebar state:', chrome.runtime.lastError);
+      // Revert the UI state if storage fails
+      body.classList.toggle('hide-sidebar');
+      button.classList.toggle('active');
+    }
+  });
 }
 
 // Initialize the extension
