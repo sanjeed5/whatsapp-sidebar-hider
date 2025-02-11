@@ -3,6 +3,15 @@
 ## Overview
 A simple Chrome extension that adds a toggle button to WhatsApp Web to show/hide the sidebar for a cleaner interface.
 
+## Why
+WhatsApp Web's default interface always shows the chat sidebar, which can be distracting and takes up valuable screen space when focusing on a single conversation. This extension solves several key problems:
+
+1. **Screen Space Optimization**: Maximizes the chat viewing area, especially beneficial for users with smaller screens
+2. **Focus Mode**: Reduces distractions by hiding other conversations when concentrating on one chat
+3. **User Control**: Gives users the flexibility to choose their preferred viewing mode
+4. **Productivity**: Helps maintain focus during important conversations or when taking meeting notes
+5. **Clean Interface**: Provides a more minimalist and cleaner WhatsApp Web experience
+
 ## Features
 1. Add a toggle button to the WhatsApp Web toolbar
 2. Hide/Show the sidebar when button is clicked
