@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "WhatsApp Sidebar Toggle",
+  "name": "WhatsApp Sidebar Hider",
   "version": "1.0",
-  "description": "Toggle WhatsApp Web sidebar visibility for a cleaner interface",
+  "description": "Hide WhatsApp Web sidebar for a cleaner interface",
   "permissions": [
     "storage"
   ],
