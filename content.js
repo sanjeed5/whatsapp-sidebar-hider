@@ -50,25 +50,38 @@ function toggleSidebar(button) {
 
 // Initialize the extension
 function init() {
-  // Wait for the toolbar to be ready
+  let retryCount = 0;
+  const MAX_RETRIES = 30; // 30 seconds max
+  
   const checkInterval = setInterval(() => {
+    retryCount++;
     const toolbar = document.querySelector('[data-js-navbar="true"]');
+    
     if (toolbar) {
       clearInterval(checkInterval);
-      
       const button = createToggleButton();
-      if (!button) return;
+      if (!button) {
+        console.warn('WhatsApp Sidebar Hider: Failed to create toggle button');
+        return;
+      }
 
       // Add click handler
       button.addEventListener('click', () => toggleSidebar(button));
 
       // Restore previous state
       chrome.storage.local.get('sidebarHidden', (data) => {
+        if (chrome.runtime.lastError) {
+          console.warn('Failed to restore sidebar state:', chrome.runtime.lastError);
+          return;
+        }
         if (data.sidebarHidden) {
           document.body.classList.add('hide-sidebar');
           button.classList.add('active');
         }
       });
+    } else if (retryCount >= MAX_RETRIES) {
+      clearInterval(checkInterval);
+      console.warn('WhatsApp Sidebar Hider: Failed to find toolbar after 30 seconds');
     }
   }, 1000);
 }
