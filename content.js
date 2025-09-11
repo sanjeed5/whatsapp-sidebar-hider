@@ -1,8 +1,9 @@
-// Create and insert the toggle button
+// Create and insert the toggle button (robust placement with floating fallback)
 function createToggleButton() {
   const button = document.createElement('button');
-  button.className = 'sidebar-toggle-btn x78zum5 x6s0dn4 x1afcbsf x1heor9g x1y1aw1k x1sxyh0 xwib8y2 xurb0ha';
+  button.className = 'sidebar-toggle-btn';
   button.setAttribute('aria-label', 'Toggle Sidebar');
+  button.setAttribute('aria-pressed', 'false');
   button.innerHTML = `
     <span aria-hidden="true" data-icon="toggle-sidebar" class="">
       <svg viewBox="0 0 24 24" height="24" width="24" preserveAspectRatio="xMidYMid meet" class="" fill="none">
@@ -11,30 +12,33 @@ function createToggleButton() {
       </svg>
     </span>
   `;
-  
-  // Find the toolbar container
-  const toolbar = document.querySelector('[data-js-navbar="true"]');
-  if (!toolbar) return;
 
-  // Create a wrapper div similar to other toolbar items
-  const wrapper = document.createElement('div');
-  wrapper.className = '_ajv7 x1n2onr6 x1okw0bk x5yr21d x14yjl9h xudhj91 x18nykt9 xww2gxu xlkovuz x16j0l1c xyklrzc x1mh8g0r x1anpbxc x18wx58x xo92w5m';
-  wrapper.appendChild(button);
+  // Try to attach next to Settings/Profile within header
+  const header = document.querySelector('header');
+  const settingsButton = document.querySelector('button[aria-label*="Settings" i]') || document.querySelector('button[aria-label*="Profile" i]');
+  if (header) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'sidebar-toggle-wrapper';
+    wrapper.appendChild(button);
 
-  // Find the settings button container (it's usually the last section before profile)
-  const settingsButton = toolbar.querySelector('button[aria-label="Settings"]');
-  if (settingsButton) {
-    const settingsContainer = settingsButton.closest('._ajv7');
-    if (settingsContainer) {
-      settingsContainer.parentNode.insertBefore(wrapper, settingsContainer);
-    } else {
-      toolbar.appendChild(wrapper);
+    if (settingsButton && settingsButton.parentNode) {
+      try {
+        const referenceNode = settingsButton.closest('div') || settingsButton;
+        const parentNode = referenceNode.parentNode;
+        parentNode.insertBefore(wrapper, referenceNode);
+        return button;
+      } catch (err) {
+        // fall through to append to header
+      }
     }
-  } else {
-    // Fallback: append to the end of toolbar
-    toolbar.appendChild(wrapper);
+
+    header.appendChild(wrapper);
+    return button;
   }
 
+  // Floating fallback if header is not available
+  button.classList.add('floating');
+  document.body.appendChild(button);
   return button;
 }
 
@@ -43,6 +47,7 @@ function toggleSidebar(button) {
   const body = document.body;
   const isHidden = body.classList.toggle('hide-sidebar');
   button.classList.toggle('active', isHidden);
+  button.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
   
   // Save preference with error handling
   chrome.storage.local.set({ sidebarHidden: isHidden }, () => {
@@ -51,19 +56,41 @@ function toggleSidebar(button) {
       // Revert the UI state if storage fails
       body.classList.toggle('hide-sidebar');
       button.classList.toggle('active');
+      button.setAttribute('aria-pressed', body.classList.contains('hide-sidebar') ? 'true' : 'false');
     }
   });
 }
 
 // Handle dynamic changes to the DOM
 function setupMutationObserver() {
-  const observer = new MutationObserver((mutations) => {
-    const toolbar = document.querySelector('[data-js-navbar="true"]');
-    const button = document.querySelector('.sidebar-toggle-btn');
-    
-    if (toolbar && !button) {
-      console.log('WhatsApp Sidebar Hider: Toolbar found but button missing, recreating button');
-      createToggleButton();
+  const observer = new MutationObserver(() => {
+    const header = document.querySelector('header');
+    let button = document.querySelector('.sidebar-toggle-btn');
+
+    if (!button) {
+      console.log('WhatsApp Sidebar Hider: Button missing, creating');
+      button = createToggleButton();
+    }
+
+    // If we currently have a floating button but header is now available, try migrating into header
+    if (button && button.classList.contains('floating') && header) {
+      const settingsButton = document.querySelector('button[aria-label*="Settings" i]') || document.querySelector('button[aria-label*="Profile" i]');
+      try {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'sidebar-toggle-wrapper';
+        button.classList.remove('floating');
+        if (settingsButton && settingsButton.parentNode) {
+          const referenceNode = settingsButton.closest('div') || settingsButton;
+          const parentNode = referenceNode.parentNode;
+          wrapper.appendChild(button);
+          parentNode.insertBefore(wrapper, referenceNode);
+        } else {
+          wrapper.appendChild(button);
+          header.appendChild(wrapper);
+        }
+      } catch (e) {
+        // Keep floating if migration fails
+      }
     }
   });
 
@@ -79,10 +106,12 @@ function setupMutationObserver() {
 function cleanup() {
   const button = document.querySelector('.sidebar-toggle-btn');
   if (button) {
-    button.removeEventListener('click', toggleSidebar);
-    const wrapper = button.closest('._ajv7');
+    // The click handler is an anonymous closure; removing the element is sufficient
+    const wrapper = button.closest('.sidebar-toggle-wrapper') || button.closest('._ajv7');
     if (wrapper) {
       wrapper.remove();
+    } else {
+      button.remove();
     }
   }
   
@@ -98,39 +127,43 @@ function init() {
   let retryCount = 0;
   const MAX_RETRIES = 30; // 30 seconds max
   let observer = null;
-  
+
   const checkInterval = setInterval(() => {
     retryCount++;
-    const toolbar = document.querySelector('[data-js-navbar="true"]');
-    
-    if (toolbar) {
-      clearInterval(checkInterval);
-      const button = createToggleButton();
+    let button = document.querySelector('.sidebar-toggle-btn');
+    if (!button) {
+      button = createToggleButton();
       if (!button) {
         console.warn('WhatsApp Sidebar Hider: Failed to create toggle button');
         return;
       }
+    }
 
-      // Add click handler
+    // Add click handler once
+    if (!button.__whatsappSidebarHiderBound) {
       button.addEventListener('click', () => toggleSidebar(button));
+      button.__whatsappSidebarHiderBound = true;
+    }
 
-      // Setup mutation observer
+    if (!observer) {
       observer = setupMutationObserver();
+    }
 
-      // Restore previous state
-      chrome.storage.local.get('sidebarHidden', (data) => {
-        if (chrome.runtime.lastError) {
-          console.warn('Failed to restore sidebar state:', chrome.runtime.lastError);
-          return;
-        }
-        if (data.sidebarHidden) {
-          document.body.classList.add('hide-sidebar');
-          button.classList.add('active');
-        }
-      });
-    } else if (retryCount >= MAX_RETRIES) {
+    // Restore previous state
+    chrome.storage.local.get('sidebarHidden', (data) => {
+      if (chrome.runtime.lastError) {
+        console.warn('Failed to restore sidebar state:', chrome.runtime.lastError);
+        return;
+      }
+      if (data.sidebarHidden) {
+        document.body.classList.add('hide-sidebar');
+        button.classList.add('active');
+        button.setAttribute('aria-pressed', 'true');
+      }
+    });
+
+    if (retryCount >= MAX_RETRIES) {
       clearInterval(checkInterval);
-      console.warn('WhatsApp Sidebar Hider: Failed to find toolbar after 30 seconds');
     }
   }, 1000);
 
