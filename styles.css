@@ -3,6 +3,12 @@ body.hide-sidebar div._aigw[class*="x9f619"][class*="x1n2onr6"] {
   display: none !important;
 }
 
+/* Robustly hide known sidebar containers */
+body.hide-sidebar #side,
+body.hide-sidebar div[aria-label*="Chat list" i] {
+  display: none !important;
+}
+
 /* Toggle button styles with fallbacks */
 .sidebar-toggle-btn {
   background: none;
@@ -25,6 +31,22 @@ body.hide-sidebar div._aigw[class*="x9f619"][class*="x1n2onr6"] {
 /* Active state when sidebar is hidden */
 .sidebar-toggle-btn.active {
   background-color: var(--background-default-active, rgba(0, 0, 0, 0.1));
+  border-radius: 8px;
+}
+
+/* Wrapper used when injecting into header */
+.sidebar-toggle-wrapper {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Floating fallback styles */
+.sidebar-toggle-btn.floating {
+  position: fixed;
+  right: 16px;
+  top: 16px;
+  z-index: 99999;
+  background-color: var(--background-default, rgba(0, 0, 0, 0.05));
   border-radius: 8px;
 }
 
